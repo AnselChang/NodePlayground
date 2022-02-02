@@ -19,7 +19,7 @@ import pygame, sys, math, pygame.gfxdraw
 pygame.init()
 pygame.font.init()
 
-fontHuge = pygame.font.SysFont("Comic Sans Bold", 36)
+fontHuge = pygame.font.SysFont("Comic Sans Bold", 30)
 fontBig = pygame.font.SysFont("Comic Sans Bold", 54)
 font = pygame.font.SysFont("Comic Sans Bold", 34)
 fontsmall = pygame.font.SysFont("Comic Sans", 24)
@@ -82,6 +82,9 @@ def lighten(color, amount, doThis = True):
         return [min(i * amount,255) for i in color]
     else:
         return color
+
+def shiftPressed():
+    return (pygame.key.get_mods() & pygame.KMOD_SHIFT) != 0
     
 NONE = 0
 ID_HIGHLIGHT = 1
@@ -315,7 +318,7 @@ class Graph:
         print(json.dumps(JSON))
 
 
-screen = pygame.display.set_mode([WIDTH, HEIGHT])
+screen = pygame.display.set_mode([WIDTH, HEIGHT], pygame.RESIZABLE)
 
 g = Graph()
 if INPUT == "":
@@ -333,13 +336,14 @@ nodeMoving = None
 nodeTyping = None
 firstType = True
 
-titleText = fontHuge.render("Z -> new node, X -> delete, A -> change text, T -> toggle node/edge, S -> generate savefile, P -> print C++ code)", True, WHITE)
+titleText = fontHuge.render("Z -> new node, Shift+Drag -> new edge, X -> delete, A -> change text, T -> toggle node/edge, S -> generate savefile, P -> print C++ code)", True, WHITE)
 
 while True:
 
     mx, my = pygame.mouse.get_pos()
     nodeHovered = g.get(mx, my)
     edgeHovered = g.getEdge(mx, my)
+
 
     if key == pygame.K_RETURN:
         if nodeTyping:
@@ -349,7 +353,6 @@ while True:
     elif key is not None and nodeTyping is not None:
         char = pygame.key.name(key)
         isID = nodeTyping.highlight == ID_HIGHLIGHT
-
 
         def checkFirst():
             global firstType
@@ -364,20 +367,14 @@ while True:
             checkFirst()
             if len(nodeTyping.text[nodeTyping.highlight]) > 0:
                 nodeTyping.text[nodeTyping.highlight] = nodeTyping.text[nodeTyping.highlight][:-1]
-        elif char.isalnum() and (not isID or char.isnumeric()):
+        elif (len(char) == 1 and (char.isalnum()) or char == "." or char == ",") and (not isID or char.isnumeric()):
             checkFirst()
-            nodeTyping.text[nodeTyping.highlight] += char
+            nodeTyping.text[nodeTyping.highlight] +=  char
         
         
     elif key == pygame.K_z:
         # add
         g.add(g.nextID(), "[Name]", "[theta_1, theta_2]", False, mx, my)
-    elif key == pygame.K_SPACE:
-        # move node
-        if nodeMoving is None:
-            nodeMoving = nodeHovered
-        else:
-            nodeMoving = None
     elif key == pygame.K_t:
         # toggle
         if nodeHovered:
@@ -457,12 +454,24 @@ while True:
             
             if nodeHovered is not None:
                 if nodeMoving is None:
-                    nodePressed = nodeHovered
+
+                    if shiftPressed():
+                        nodePressed = nodeHovered
+                    else:
+                        nodeMoving = nodeHovered
                 else:
                     nodeMoving = None
         elif event.type == pygame.MOUSEBUTTONUP:
+            nodeMoving = None
             if nodePressed is not None and nodeHovered is not None and nodePressed != nodeHovered:
                 g.addEdge(nodePressed, nodeHovered)
             nodePressed = None
+
+        elif event.type == pygame.VIDEORESIZE:
+            # There's some code to add back window content here.
+            surface = pygame.display.set_mode((event.w, event.h),
+                                              pygame.RESIZABLE)
+            WIDTH = event.w
+            HEIGHT = event.h
                 
         
