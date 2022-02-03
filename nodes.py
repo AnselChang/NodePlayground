@@ -17,6 +17,7 @@ else:
 import pygame, sys, math, pygame.gfxdraw
 
 pygame.init()
+pygame.display.set_caption('NodePlayground by Ansel')
 pygame.font.init()
 
 fontHuge = pygame.font.SysFont("Comic Sans Bold", 30)
@@ -28,6 +29,8 @@ WIDTH = 1400
 HEIGHT = 820
 
 LINE_RADIUS = 4
+
+LEGAL = "abcdefghijklmnopqrstuvwxyz1234567890-,."
 
 WHITE = [255,255,255]
 GREEN = [30,200,30]
@@ -367,9 +370,10 @@ while True:
             checkFirst()
             if len(nodeTyping.text[nodeTyping.highlight]) > 0:
                 nodeTyping.text[nodeTyping.highlight] = nodeTyping.text[nodeTyping.highlight][:-1]
-        elif (len(char) == 1 and (char.isalnum()) or char == "." or char == ",") and (not isID or char.isnumeric()):
+        elif len(char) == 1 and char in LEGAL and (not isID or char.isnumeric()):
             checkFirst()
-            nodeTyping.text[nodeTyping.highlight] +=  char
+            nodeTyping.text[nodeTyping.highlight] +=  "_" if char == "-" else char
+
         
         
     elif key == pygame.K_z:
@@ -447,13 +451,9 @@ while True:
         elif event.type == pygame.KEYDOWN:
             key = event.key
         elif event.type == pygame.MOUSEBUTTONDOWN:
-
-            if nodeTyping is not None:
-                nodeTyping.resetText()
-                nodeTyping = None
             
             if nodeHovered is not None:
-                if nodeMoving is None:
+                if nodeMoving is None and nodeTyping is None:
 
                     if shiftPressed():
                         nodePressed = nodeHovered
@@ -461,6 +461,10 @@ while True:
                         nodeMoving = nodeHovered
                 else:
                     nodeMoving = None
+
+            if nodeTyping is not None:
+                nodeTyping.resetText()
+                nodeTyping = None
         elif event.type == pygame.MOUSEBUTTONUP:
             nodeMoving = None
             if nodePressed is not None and nodeHovered is not None and nodePressed != nodeHovered:
