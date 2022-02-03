@@ -6,6 +6,8 @@
 #   s -> generate savefile
 #   p -> print c++ code
 
+# pyinstaller nodes.py --onefile
+
 import json 
 INPUT = input("Paste save text here, or just press enter to create a new graph:  ").strip()
 if INPUT == "":
@@ -15,6 +17,17 @@ else:
     info = json.loads(INPUT)
 
 import pygame, sys, math, pygame.gfxdraw
+from os.path import exists, join
+
+version = "1.3.9"
+
+if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+    print('running in a PyInstaller bundle', sys._MEIPASS)
+    application_path = os.path.dirname(sys.executable)
+    print(application_path)
+else:
+    print('running in a normal Python process')
+    application_path = None
 
 pygame.init()
 pygame.display.set_caption('NodePlayground by Ansel')
@@ -317,8 +330,24 @@ class Graph:
         for edge in self.edges:
             JSON["edges"].append(edge.save())
 
+        savetext = json.dumps(JSON)
+
         print("\n\n=====================\nSAVEFILE:\n")
-        print(json.dumps(JSON))
+        print(savetext)
+
+        fname = "node_save{}.txt"
+        i = 1
+        while exists(fname.format(i)):
+            i += 1
+
+        if application_path != None:
+            fname = join(application_path, fname)
+        
+        file = open(fname.format(i), "w")
+        file.write(savetext)
+        file.close()
+
+        
 
 
 screen = pygame.display.set_mode([WIDTH, HEIGHT], pygame.RESIZABLE)
